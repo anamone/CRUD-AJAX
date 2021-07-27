@@ -1,0 +1,31 @@
+﻿@model GeoLab_5_17_AJAX.Models.studentInfo
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<div class="input-group">
+    @Html.EditorFor(model => model.StudentName, new { htmlAttributes = new { @class = "form-control" } })
+    @Html.ValidationMessageFor(model => model.StudentName, "", new { @class = "text-danger" })
+</div>
+<div class="input-group">
+    <button class="btn btn-success">გაგზავნა</button>
+</div>
+
+<script>
+    $(function () {
+        $('.btn-success').click(function () {
+            var name = $('#StudentName').val();
+            $.ajax({
+                url: '/Account/Get',
+                data: { StudentName: name },
+                type: 'Post',
+                success: function (response) {
+                    alert(response);
+                }
+            })
+        })
+    });
+</script>

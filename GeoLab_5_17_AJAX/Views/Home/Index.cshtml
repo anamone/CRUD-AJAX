@@ -1,0 +1,173 @@
+﻿@model IEnumerable<GeoLab_5_17_AJAX.Models.Student_5_17>
+@{
+    ViewBag.Title = "Index";
+}
+
+<button type="button" class="btn btn-success" style="margin-top:20px; margin-bottom:20px;" data-bs-toggle="modal" data-bs-target="#myModal">დამატება</button>
+
+<h2>სტუდენტების სია</h2>
+
+<input class="form-control" id="searchQuery" style="margin-bottom:10px;"placeholder="ძებნა"/>
+<div id="searchList">
+
+</div>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Id</th>
+        <th>სახელი</th>
+        <th></th>
+    </tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.StudentName</td>
+            <td>
+                <button class="btn btn-warning">შეცვლა</button>
+                <button class="btn btn-danger delete_button" data-bs-toggle="modal" data-bs-target="#myModal2" type="button">წაშლა</button>
+            </td>
+        </tr>
+    }
+</table>
+
+<!-- დამატება -->
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel">ახალი სტუდენტის დამატება</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <input class="form-control col-md-8" type="text" placeholder="სახელი და გვარი" id="Name" />
+                    <button class="btn btn-success col-md-3 offset-md-1" id="submit_add">შენახვა</button>
+                </div>
+                <div class="input-group">
+                    <p id="message" style="margin-top:5px;"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="modal_close">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- წაშლა -->
+<div class="modal fade" id="myModal2" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel">წაშლა</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <p>ნამდვილად გსურთ მომხმარებლის წაშლა?</p>
+                </div>
+                <div class="input-group">
+                    <p id="message" style="margin-top:5px;"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="modal_close2">გაუქმება</button>
+                <button type="button" class="btn btn-danger delete" data-bs-dismiss="modal" id="modal_close3">წაშლა</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var htmltag = "";
+        $('#searchQuery').keyup(function () {
+            var query = $(this).val();
+
+            $.ajax({
+                url: '/Home/AutoCompliteResult',
+                type: 'POST',
+                data: { query: query },
+                success: function (response) {
+                    htmltag = "<ul>";
+                    $.each(response, function (key, value) {
+                        htmltag += '<li><a href="/Home/Details/"' + value.id + '"</a>' + value.StudentName + '</li>';
+                    });
+
+                    htmltag += '</ul>';
+                    $('#searchList').html("");
+                    $('#searchList').append(htmltag);
+
+                }
+
+            })
+        })
+    })
+
+    $(function () {       
+        $('#submit_add').click(function () {
+            var n = $('#Name').val();
+            if ($.trim(n) == "") {
+                $('#message').html('აუცილებელია სახელის მითითება');
+                $('#message').css('color', 'red');
+            }
+            else {
+                $.ajax({
+                    url: '/Home/Add',
+                    type: 'POST',
+                    data: { Name: n },
+                    success: function (response) {
+                        if (response != 'false') {
+                            var txt = '<tr><td>' + response + '</td><td>' + n + '</td><td><button class="btn btn-warning">შეცვლა</button><button class="btn btn-danger delete_button" data-bs-toggle="modal" data-bs-target="#myModal2" type="button">წაშლა</button></td></tr>';
+                            $('.table').append(txt);
+                            $('#modal_close').trigger('click');
+                            $('#Name').val("");
+                        }
+                        else {
+                            alert('დაფიქსირდა შეცდომა');
+                        }
+                    },
+                    error: function () {
+                        alert('შეცდომა')
+                    }
+                })
+            }
+        });
+
+        $('body').on('click', '.delete_button', function () {
+            var tr = $(this).parents('tr');
+            var id = tr.find('td:first').html();
+
+            $('.delete').click(function () {
+                $.ajax({
+                    url: '/Home/Delete',
+                    type: 'POST',
+                    data: { Id: id },
+                    success: function (response) {
+                        if (response == 'true') {
+                            tr.remove();
+                        }
+                    }
+                });
+            });
+        });
+    });
+</script>
+
+<style>
+    #searchList{
+        position:relative;
+        width:280px;
+    }
+    #searchList ul{
+        width: 100%;
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        left:0;
+        top:-10px;
+        background-color:lightgray;
+    }
+</style>
